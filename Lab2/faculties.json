@@ -1,0 +1,52 @@
+[
+    {
+        "Name": "GH",
+        "Abbreviation": "g",
+        "Student1": [],
+        "Study_Field": "g"
+    },
+    {
+        "Name": "FCIM",
+        "Abbreviation": "FC",
+        "Student1": [],
+        "Study_Field": "Software_Engineering"
+    },
+    {
+        "Name": "Utm",
+        "Abbreviation": "U",
+        "Student1": [],
+        "Study_Field": "Food_Technology"
+    },
+    {
+        "Name": "Utm2",
+        "Abbreviation": "ug",
+        "Student1": [
+            "marin@gmail.com"
+        ],
+        "Study_Field": "Veterinary_Medicine"
+    },
+    {
+        "Name": "Calculatoare_si_microelectronica",
+        "Abbreviation": "CM",
+        "Student1": [
+            "cristi@gmail.com"
+        ],
+        "Study_Field": "Software_Engineering"
+    },
+    {
+        "Name": "Facultatea roboticii",
+        "Abbreviation": "FR",
+        "Student1": [
+            "dragos@gmail.com"
+        ],
+        "Study_Field": "Urbanism_Architecture"
+    },
+    {
+        "Name": "Facultatea1",
+        "Abbreviation": "Fac_1",
+        "Student1": [
+            "emre@gmail.com"
+        ],
+        "Study_Field": "Urbanism_Architecture"
+    }
+]
