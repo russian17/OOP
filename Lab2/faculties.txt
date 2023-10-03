@@ -1,0 +1,2 @@
+{Name: Fac1, Abbreviation: F1, Student1: [], Study_Field: Mechanical_Engineering}
+{Name: Facultatea2, Abbreviation: F2, Student1: [tudor@gmail.com; sah@; lucik@gmail.com], Study_Field: Software_Engineering}
