@@ -1,122 +1,133 @@
-class FolderOperations(Operations):
+from datetime import datetime
+import os
+from operations import Operations
+class FolderOperations():
     def __init__(self, folder_path):
-        super().__init__(folder_path)
+        self.folder_path = folder_path
+        self.snapshot_time = None
+        self.file_info = {}
+        self.previous_file_list = set()
+        self.previous_file_info = {}
+        self.processed_files = set()
 
-    # Function to list files from the folder with their status and modification time
-    def list_files(self):
-        files = {}
-        for filename in os.listdir(self.folder_path):
-            file_path = os.path.join(self.folder_path, filename)
-            if os.path.isfile(file_path):
-                modification_time = os.path.getmtime(file_path)
-                file_status = "NEW FILE"
-                files[filename] = File(filename, file_status, modification_time)
-        return files
-
-
-    # Function to commit the snapshot and update the state of files by comparing memory size or name
     def commit(self):
-        commit_count = 0
+        self.snapshot_time = datetime.now()
+        self.previous_file_list = set(self.file_info.keys())
+        self.previous_file_info = self.file_info.copy()
+        self.file_info = {}
+        print(f"Snapshot updated at {self.snapshot_time}")
 
-        current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-        print("Snapshot time updated to:", current_time)
-        self.current_files = self.files
+    def scan_folder(self):
+        print(f"Scanning folder: {self.folder_path}")
+        files = os.listdir(self.folder_path)
+        print(f"Files in folder: {files}")
+        for file in files:
+            file_path = os.path.join(self.folder_path, file)
+            if os.path.isfile(file_path):
+                self.update_file_info(file_path)
 
-        if commit_count == 0:
-            self.files = self.list_files()
-            self.current_files = self.files
-            commit_count += 1
-            print("Commit done!")
-            for filename, file_obj in self.files.items():
-                print(f"File: {filename}, Status: {file_obj.status}, Modification Time: {file_obj.modification_time}")
+    def update_file_info(self, file_path):
+        file_info = {}
+        file_info["name"] = os.path.relpath(file_path, self.folder_path)
+        file_info["extension"] = os.path.splitext(file_path)[1]
+        file_info["created_time"] = datetime.fromtimestamp(os.path.getctime(file_path))
+        file_info["modified_time"] = datetime.fromtimestamp(os.path.getmtime(file_path))
 
-            for filename, file_obj in self.current_files.items():
-                print(f"File: {filename}, Status: {file_obj.status}, Modification Time: {file_obj.modification_time}")
+        if file_info["extension"] in {".png", ".jpg", ".jpeg", ".gif", ".bmp"}:
+            Operation = Operations(file_path)
+            file_info["image_size"] = Operation.get_image_size()
+        elif file_info["extension"] in {".txt", ".pdf", ".docx", ".rtf"}:
+            Operation = Operations(file_path)
+            line_count, word_count, char_count = Operation.get_text_stats()
+            file_info["line_count"] = line_count
+            file_info["word_count"] = word_count
+            file_info["char_count"] = char_count
+        elif file_info["extension"] in {".py", "java", "cpp", "c"}:
+            Operation = Operations(file_path)
+            line_count, class_count, method_count, word_count, char_count = Operation.program_processing()
+            file_info["line_count"] = line_count
+            file_info["class_count"] = class_count
+            file_info["method_count"] = method_count
+            file_info["word_count"] = word_count
+            file_info["char_count"] = char_count
 
-            return
+        self.file_info[file_info["name"]] = file_info
 
-        self.files = self.list_files()
-        for filename, file_obj in self.files.items():
-            if filename in self.current_files:
-                if file_obj.modification_time != self.current_files[filename].modification_time:
-                    file_obj.status = "CHANGED"
+    def show_file_info(self, filename):
+        if filename in self.file_info:
+            print(self.file_info)
+            file_info = self.file_info[filename]
+            print("File Name:", file_info["name"])
+            print("Extension:", file_info["extension"])
+            print("Created Time:", file_info["created_time"])
+            print("Modified Time:", file_info["modified_time"])
+            if "image_size" in file_info:
+                print("Image Size:", file_info["image_size"])
+            elif "line_count" in file_info:
+                print("Line Count:", file_info["line_count"])
+                if "word_count" in file_info:
+                    print("Word Count:", file_info["word_count"])
                 else:
-                    file_obj.status = "NO CHANGED"
-            else:
-                file_obj.status = "NEW FILE"
-        for filename, file_obj in self.current_files.items():
-            if filename not in self.files:
-                file_obj.status = "DELETED"
-            if file_obj.status == "DELETED":
-                del self.current_files[filename]
-            if file_obj.status == "CHANGED":
-                file_obj.status = "NO CHANGED"
-
-        self.current_files = self.files
-        commit_count += 1
-        print("Commit done!")
-        print(self.files)
-        print(self.current_files)
-    # Function to display info by criteria
-    def info(self):
-        if not self.current_files:
-            print("First need to commit!")
+                    print("Word Count: N/A")
+                if "char_count" in file_info:
+                    print("Character Count:", file_info["char_count"])
+                else:
+                    print("Character Count: N/A")
+            if "class_count" in file_info:
+                print("Class Count:", file_info["class_count"])
+            if "method_count" in file_info:
+                print("Method Count:", file_info["method_count"])
         else:
-            while True:
-                print("What do you want to display?")
-                print("1. All - all files")
-                print("2. Image - image files")
-                print("3. Text - text files")
-                print("4. Program - program files")
-                print("5. Go back - go back to main menu")
-                print("6. Close - close the program")
-                choice_info = input("Enter your choice:").lower()
+            print(f"File '{filename}' not found in the monitored folder.")
 
-                filenameArray, extensionArray = [], []
-                for items in self.current_files:
-                    filename, extension = items.rsplit('.', 1)
-                    filenameArray.append(filename)
-                    extensionArray.append(extension)
+    def status(self):
+        if self.snapshot_time:
+            print(f"Snapshot taken at {self.snapshot_time}")
 
-                if choice_info == "1":
-                    for i in range(len(filenameArray)):
-                        print(filenameArray[i] + "." + extensionArray[i])
+            # Use the set of previous file names to identify added and deleted files
+            added_files = self.file_info.keys() - self.previous_file_list
+            deleted_files = self.previous_file_list - self.file_info.keys()
 
-                elif choice_info == "2":
-                    self.process_images(filenameArray, extensionArray)
+            # Handle added files
+            for filename in added_files:
+                file_info = self.file_info[filename]
+                # Check if the file was created after the snapshot time
+                if file_info["created_time"] > self.snapshot_time:
+                    print(f"{filename} - New File")
 
-                elif choice_info == "3":
-                    self.process_texts(filenameArray, extensionArray)
+            # Handle deleted files
+            for filename in deleted_files:
+                print(f"{filename} - Deleted")
 
-                elif choice_info == "4":
-                    self.process_programs(filenameArray, extensionArray)
+            # Iterate over the current file info to check for changes
+            for filename, file_info in self.file_info.items():
+                prev_info = self.previous_file_info.get(filename)
+                if prev_info:
+                    if file_info != prev_info:
+                        print(f"{filename} - Changed")
+                    else:
+                        print(f"{filename} - No change")
 
-                elif choice_info == "5":
-                    break
+    def detection(self, file_path):
+        if self.snapshot_time:
+            file_info = {}
+            file_info["name"] = os.path.relpath(file_path, self.folder_path)
+            file_info["extension"] = os.path.splitext(file_path)[1]
+            file_info["created_time"] = datetime.fromtimestamp(os.path.getctime(file_path))
+            file_info["modified_time"] = datetime.fromtimestamp(os.path.getmtime(file_path))
+            for filename, file_info in self.file_info.items():
+                if file_info["name"] in self.file_info and file_info["name"] in self.previous_file_info:
+                    if file_info["modified_time"] > self.snapshot_time:
+                        print(f"{file_info['name']} - Changed")
+            for filename, file_info in self.file_info.items():
+                self.processed_files.add(filename)
+                if filename not in self.processed_files:
+                    if file_info["created_time"] > self.snapshot_time:
+                        print(f"{file_info['name']} - New File")
 
-                elif choice_info == "6":
-                    print("Exiting the program.")
-                    exit()
+                #elif file_info["name"] in self.file_info and file_info["name"] not in self.previous_file_info:
+                    #print(f"{file_info['name']} - File deleted")
 
-                else:
-                    print("Invalid choice, try again!")
 
-# TODO:Change on current_files
-    # Function to display status of files if they were changed since last snapshot comparing memory
-    """def status(self):
-        if not self.current_files:
-            print("First need to commit!")
-        else:
-            for filename, file_obj in self.current_files.items():
-                if file_obj.modification_time != self.files[filename].modification_time:
-                    if file_obj.status == "NEW FILE":
-                        print(f"{filename} - {file_obj.status}")
-                    elif file_obj.status == "CHANGED":
-                        print(f"{filename} - {file_obj.status}")
-                    elif file_obj.status == "DELETED":
-                        print(f"{filename} - {file_obj.status}")
-                else:
-                    if file_obj.status == "NO CHANGED":
-                        print(f"{filename} - {file_obj}")
-                    if filename not in self.files:
-                        file_obj.status = "DELETED"""
+
+
