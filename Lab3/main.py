@@ -1,7 +1,6 @@
 from folder_operations import FolderOperations
-import threading
 import time
-
+import threading
 class FolderManager():
     def __init__(self, folder_path):
         self.folder_path = folder_path
@@ -9,8 +8,8 @@ class FolderManager():
 
     def schedule_detection(self):
         while True:
-            self.folder_operations.detection(self.folder_path)
-            time.sleep(5)  # Schedule detection every 5 seconds
+            self.folder_operations.detection()
+            time.sleep(10)  # Schedule detection every 5 seconds
 
     def run(self):
         # Create a thread for scheduled detection
@@ -20,23 +19,33 @@ class FolderManager():
         # Start the detection thread
         detection_thread.start()
 
-        print("Welcome to Folder manager system!\n")
         while True:
-            action = input("Enter action (commit, info <filename>, status, or exit): ")
-            if action == "commit":
+            print("What do you want to do?")
+            print("1 - Commit snapshot and update status")
+            print("2 - Print folder contents")
+            print("3 - Get file status")
+            print("4 - Quit the program")
+
+            try:
+                choice = int(input("Enter your choice: "))
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+                continue
+
+            if choice == 1:
                 self.folder_operations.commit()
-            elif action.startswith("info"):
-                _, filename = action.split(maxsplit=1)
-                self.folder_operations.show_file_info(filename)
-            elif action == "status":
-                self.folder_operations.scan_folder()
+            elif choice == 2:
                 self.folder_operations.status()
-            elif action == "exit":
+            elif choice == 3:
+                self.folder_operations.info()
+            elif choice == 4:
+                print("Exiting the program.")
                 break
             else:
-                print("Invalid action. Please try again.")
+                print("Invalid choice. Please select a valid option.")
+
 
 if __name__ == "__main__":
     folder_path = r"C:\Users\Simion\Desktop\OOP\Lab3\Test"
-    file_manager = FolderManager(folder_path)
-    file_manager.run()
+    file = FolderManager(folder_path)
+    file.run()

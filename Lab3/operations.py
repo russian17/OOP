@@ -5,66 +5,72 @@ import os
 class Operations:
     def __init__(self, folder_path):
         self.folder_path = folder_path
-        self.content = None
+        self.text_content = None
+        self.program_content = None
+
 
     def get_image_size(self):
-        if self.folder_path.endswith((".png", ".jpg")):
-            try:
-                with Image.open(self.folder_path) as img:
-                    width, height = img.size
-                    return f"{width}x{height}"
-            except Exception as e:
-                return f"Error: {str(e)}"
-        else:
-            return "Not an image file"
+        for file in os.listdir(self.folder_path):
+            if file.endswith(("png", "jpg")):
+                try:
+                    with Image.open(os.path.join(self.folder_path, file)) as img:
+                        width, height = img.size
+                        print(f"{file} - {width}x{height}")
+                except Exception as e:
+                    print(f"Error: {str(e)}")
 
     def count_texts(self):
-        try:
-            with open(self.folder_path, 'r', encoding='utf-8') as file:
-                lines = words = characters = 0
-                for line in file:
-                    lines += 1
-                    words += len(line.split())
-                    characters += len(line)
-                return lines, words, characters
-        except FileNotFoundError:
-            print(f"File not found: {self.folder_path}")
-            return 0, 0, 0
-        except Exception as e:
-            print(f"Error reading file: {str(e)}")
-            return 0, 0, 0
+        for file in os.listdir(self.folder_path):
+            line_count = 0
+            word_count = 0
+            char_count = 0
+            if file.endswith("txt"):
+                file_path = os.path.join(self.folder_path, file)
 
-    def get_text_stats(self):
-        if self.folder_path.endswith(".txt") and os.path.isfile(self.folder_path):
-            lines, words, characters = self.count_texts()
-            return lines, words, characters
-        else:
-            print("Unsupported file format or file not found. Please provide a .txt file.")
-            return 0, 0, 0
+                with open(file_path, 'r', encoding='utf-8') as file1:
+                    text_content = file1.read()
+                    self.text_content = text_content
+
+                lines = text_content.split('\n')
+                line_count += len(lines)
+
+                words = text_content.split()
+                word_count += len(words)
+
+                char_count += len(text_content)
+
+                print(f"{file} - {line_count} lines, {word_count} words, {char_count} characters")
+
 
     def program_processing(self):
-        valid_extensions = (".py", ".java", ".cpp", ".c")
 
-        if self.folder_path.endswith(valid_extensions):
-            if self.content is None:
-                with open(self.folder_path, 'r', encoding='utf-8') as file:
-                    self.content = file.read()
+        valid_extensions = ("py", "java", "cpp", "c")
 
+        for file in os.listdir(self.folder_path):
+            line_count = 0
+            class_count = 0
+            method_count = 0
+            word_count = 0
+            char_count = 0
+            if file.endswith(valid_extensions):
+                file_path = os.path.join(self.folder_path, file)
 
-            lines = self.content.split('\n')
-            line_count = len(lines)
+                with open(file_path, 'r', encoding='utf-8') as file1:
+                    program_content = file1.read()
+                    self.program_content = program_content
 
-            class_pattern = r'\bclass\b'
-            class_count = len(re.findall(class_pattern, self.content))
+                lines = program_content.split('\n')
+                line_count += len(lines)
 
-            method_pattern = r'\bdef\s+(\w+)\s*\(.*\)\s*:'
-            method_count = len(re.findall(method_pattern, self.content))
+                class_pattern = r'\bclass\b'
+                class_count += len(re.findall(class_pattern, program_content))
 
-            words = self.content.split()
-            word_count = len(words)
+                method_pattern = r'\bdef\s+(\w+)\s*\(.*\)\s*:'
+                method_count += len(re.findall(method_pattern, program_content))
 
-            char_count = len(self.content)
+                words = program_content.split()
+                word_count += len(words)
 
-            return line_count, class_count, method_count, word_count, char_count
+                char_count += len(program_content)
 
-        return 0, 0, 0, 0, 0
+                print(f"{file} - {line_count} lines, {class_count} classes, {method_count} methods, {word_count} words, {char_count} characters")

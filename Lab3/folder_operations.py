@@ -1,133 +1,142 @@
 from datetime import datetime
-import os
 from operations import Operations
-class FolderOperations():
+from file import File
+import os
+
+class FolderOperations(File):
     def __init__(self, folder_path):
+
         self.folder_path = folder_path
         self.snapshot_time = None
-        self.file_info = {}
-        self.previous_file_list = set()
-        self.previous_file_info = {}
-        self.processed_files = set()
+        self.commit_files = []
+        self.current_files = []
+        self.previous_detected_files = []
+        self.detected_files = []
+        self.added_files_during_commit = {}
+        self.start_detection = False
 
+    def get_file_info(self):
+        files = {}
+
+        for file in os.listdir(self.folder_path):
+            if os.path.isfile(os.path.join(self.folder_path, file)):
+                name, extension = file.rsplit('.', 1)
+                created_time = os.path.getctime(os.path.join(self.folder_path, file))
+                status = "Unmodified"
+                modification_time = os.path.getmtime(os.path.join(self.folder_path, file))
+                files[file] = [name, extension, status, created_time, modification_time]
+
+        return files
     def commit(self):
         self.snapshot_time = datetime.now()
-        self.previous_file_list = set(self.file_info.keys())
-        self.previous_file_info = self.file_info.copy()
-        self.file_info = {}
-        print(f"Snapshot updated at {self.snapshot_time}")
-
-    def scan_folder(self):
-        print(f"Scanning folder: {self.folder_path}")
-        files = os.listdir(self.folder_path)
-        print(f"Files in folder: {files}")
-        for file in files:
-            file_path = os.path.join(self.folder_path, file)
-            if os.path.isfile(file_path):
-                self.update_file_info(file_path)
-
-    def update_file_info(self, file_path):
-        file_info = {}
-        file_info["name"] = os.path.relpath(file_path, self.folder_path)
-        file_info["extension"] = os.path.splitext(file_path)[1]
-        file_info["created_time"] = datetime.fromtimestamp(os.path.getctime(file_path))
-        file_info["modified_time"] = datetime.fromtimestamp(os.path.getmtime(file_path))
-
-        if file_info["extension"] in {".png", ".jpg", ".jpeg", ".gif", ".bmp"}:
-            Operation = Operations(file_path)
-            file_info["image_size"] = Operation.get_image_size()
-        elif file_info["extension"] in {".txt", ".pdf", ".docx", ".rtf"}:
-            Operation = Operations(file_path)
-            line_count, word_count, char_count = Operation.get_text_stats()
-            file_info["line_count"] = line_count
-            file_info["word_count"] = word_count
-            file_info["char_count"] = char_count
-        elif file_info["extension"] in {".py", "java", "cpp", "c"}:
-            Operation = Operations(file_path)
-            line_count, class_count, method_count, word_count, char_count = Operation.program_processing()
-            file_info["line_count"] = line_count
-            file_info["class_count"] = class_count
-            file_info["method_count"] = method_count
-            file_info["word_count"] = word_count
-            file_info["char_count"] = char_count
-
-        self.file_info[file_info["name"]] = file_info
-
-    def show_file_info(self, filename):
-        if filename in self.file_info:
-            print(self.file_info)
-            file_info = self.file_info[filename]
-            print("File Name:", file_info["name"])
-            print("Extension:", file_info["extension"])
-            print("Created Time:", file_info["created_time"])
-            print("Modified Time:", file_info["modified_time"])
-            if "image_size" in file_info:
-                print("Image Size:", file_info["image_size"])
-            elif "line_count" in file_info:
-                print("Line Count:", file_info["line_count"])
-                if "word_count" in file_info:
-                    print("Word Count:", file_info["word_count"])
-                else:
-                    print("Word Count: N/A")
-                if "char_count" in file_info:
-                    print("Character Count:", file_info["char_count"])
-                else:
-                    print("Character Count: N/A")
-            if "class_count" in file_info:
-                print("Class Count:", file_info["class_count"])
-            if "method_count" in file_info:
-                print("Method Count:", file_info["method_count"])
-        else:
-            print(f"File '{filename}' not found in the monitored folder.")
-
+        print("Snapshot time updated to:", self.snapshot_time)
+        self.commit_files = self.get_file_info()
+        self.start_detection = True
+        self.added_files_during_commit = {}
     def status(self):
-        if self.snapshot_time:
-            print(f"Snapshot taken at {self.snapshot_time}")
+        if not self.commit_files:
+            print("No snapshot has been created yet.")
+            return
+        self.current_files = self.get_file_info()
+        print("Current files:")
+        for file in self.current_files:
+            if file not in self.commit_files:
+                print(f"{file} - New file")
+            elif self.current_files[file][4] > self.commit_files[file][4]:
+                print(f"{file} - Modified")
+            elif self.current_files[file][4] == self.commit_files[file][4]:
+                print(f"{file} - Unmodified")
+        deleted_files = self.commit_files.keys() - self.current_files.keys()
+        for file in deleted_files:
+            print(f"{file} - Deleted")
 
-            # Use the set of previous file names to identify added and deleted files
-            added_files = self.file_info.keys() - self.previous_file_list
-            deleted_files = self.previous_file_list - self.file_info.keys()
+    def info(self):
+        self.current_files = self.get_file_info()
 
-            # Handle added files
-            for filename in added_files:
-                file_info = self.file_info[filename]
-                # Check if the file was created after the snapshot time
-                if file_info["created_time"] > self.snapshot_time:
-                    print(f"{filename} - New File")
+        while True:
+            operation = Operations(self.folder_path)
+            print("What do you want to display?")
+            print("1. All - all files")
+            print("2. Image - image files")
+            print("3. Text - text files")
+            print("4. Program - program files")
+            print("5. Go back - go back to main menu")
+            print("6. Close - close the program")
+            choice_info = input("Enter your choice:")
 
-            # Handle deleted files
-            for filename in deleted_files:
-                print(f"{filename} - Deleted")
+            if choice_info == "1":
+                files = self.get_file_info()
+                for file in files:
+                    print(f"Filename - {files[file][0]}")
+                    print(f"File extension: {files[file][1]}")
+                    print(f"Created time: {files[file][3]}")
+                    print(f"Modification time: {files[file][4]}")
+                    print("--------------------------------------------------")
 
-            # Iterate over the current file info to check for changes
-            for filename, file_info in self.file_info.items():
-                prev_info = self.previous_file_info.get(filename)
-                if prev_info:
-                    if file_info != prev_info:
-                        print(f"{filename} - Changed")
-                    else:
-                        print(f"{filename} - No change")
+            elif choice_info == "2":
+                operation.get_image_size()
 
-    def detection(self, file_path):
-        if self.snapshot_time:
-            file_info = {}
-            file_info["name"] = os.path.relpath(file_path, self.folder_path)
-            file_info["extension"] = os.path.splitext(file_path)[1]
-            file_info["created_time"] = datetime.fromtimestamp(os.path.getctime(file_path))
-            file_info["modified_time"] = datetime.fromtimestamp(os.path.getmtime(file_path))
-            for filename, file_info in self.file_info.items():
-                if file_info["name"] in self.file_info and file_info["name"] in self.previous_file_info:
-                    if file_info["modified_time"] > self.snapshot_time:
-                        print(f"{file_info['name']} - Changed")
-            for filename, file_info in self.file_info.items():
-                self.processed_files.add(filename)
-                if filename not in self.processed_files:
-                    if file_info["created_time"] > self.snapshot_time:
-                        print(f"{file_info['name']} - New File")
+            elif choice_info == "3":
+                operation.count_texts()
 
-                #elif file_info["name"] in self.file_info and file_info["name"] not in self.previous_file_info:
-                    #print(f"{file_info['name']} - File deleted")
+            elif choice_info == "4":
+                operation.program_processing()
+
+            elif choice_info == "5":
+                break
+
+            elif choice_info == "6":
+                print("Exiting the program.")
+                exit()
+
+            else:
+                print("Invalid choice, try again!")
+
+    def detection(self):
+
+        if self.start_detection:
+            self.current_files = self.get_file_info()
+            current_files = self.current_files
+            added_files_during_commit = {}
+            detected_files = []  # Create a list to store detected files
+            # Create a new dictionary that combines keys from self.current_files and self.added_files_during_commit
+            file_dict = {key: self.current_files.get(key) or self.added_files_during_commit.get(key) for key in
+                         set(self.current_files) | set(self.added_files_during_commit)}
+            #print(self.commit_files)
+            #print(current_files)
+            print(file_dict)
+            for file in self.current_files:
+                if file not in self.commit_files and file not in self.detected_files:
+                    print("DETECTION OCCURRED!:")
+                    print(f"{file} - New file")
+                    added_files_during_commit.update({file: self.current_files[file]})
+                    detected_files.append(file)  # Add the detected file to the list
+
+                elif file not in self.detected_files and file_dict[file][4] > self.commit_files[file][4]:
+                    print("DETECTION OCCURRED!:")
+                    print(f"{file} - Modified")
+                    detected_files.append(file)
+
+                elif file not in self.detected_files and current_files[file][4] == self.commit_files[file][4]:
+                    detected_files.append(file)
 
 
 
+            deleted_files = file_dict.keys() - self.current_files.keys()
+            if deleted_files:
+                del detected_files[:]
+            print(deleted_files)
+            print(self.detected_files)
+            for file in deleted_files:
+                if file in self.added_files_during_commit:
+                    print("DETECTION OCCURRED!:")
+                    print(f"{file} - Deleted")
+                    del self.added_files_during_commit[file]
+                    detected_files.append(file)
+                if file not in self.detected_files:
+                    print("DETECTION OCCURRED!:")
+                    print(f"{file} - Deleted")
+                    detected_files.append(file)
 
+            self.detected_files += detected_files
+            self.added_files_during_commit.update(added_files_during_commit)
