@@ -1,9 +1,8 @@
 from datetime import datetime
 from operations import Operations
-from file import File
 import os
 
-class FolderOperations(File):
+class FolderOperations():
     def __init__(self, folder_path):
         self.folder_path = folder_path
         self.snapshot_time = None
@@ -56,6 +55,47 @@ class FolderOperations(File):
         for file in self.deleted_files_during_commit:
             print(f"{file} - Deleted")
 
+    def info(self):
+        self.current_files = self.get_file_info()
+
+        while True:
+            operation = Operations(self.folder_path)
+            print("What do you want to display?")
+            print("1. All - all files")
+            print("2. Image - image files")
+            print("3. Text - text files")
+            print("4. Program - program files")
+            print("5. Go back - go back to main menu")
+            print("6. Close - close the program")
+            choice_info = input("Enter your choice:")
+
+            if choice_info == "1":
+                files = self.get_file_info()
+                for file in files:
+                    print(f"Filename - {files[file][0]}")
+                    print(f"File extension: {files[file][1]}")
+                    print(f"Created time: {files[file][3]}")
+                    print(f"Modification time: {files[file][4]}")
+                    print("--------------------------------------------------")
+
+            elif choice_info == "2":
+                operation.get_image_size()
+
+            elif choice_info == "3":
+                operation.count_texts()
+
+            elif choice_info == "4":
+                operation.program_processing()
+
+            elif choice_info == "5":
+                break
+
+            elif choice_info == "6":
+                print("Exiting the program.")
+                exit()
+
+            else:
+                print("Invalid choice, try again!")
     def detection(self):
         if self.start_detection:
             self.current_files = self.get_file_info()
