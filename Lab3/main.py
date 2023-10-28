@@ -9,7 +9,7 @@ class FolderManager():
     def schedule_detection(self):
         while True:
             self.folder_operations.detection()
-            time.sleep(10)  # Schedule detection every 5 seconds
+            time.sleep(5)  # Schedule detection every 5 seconds
 
     def run(self):
         # Create a thread for scheduled detection

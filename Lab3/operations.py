@@ -16,6 +16,7 @@ class Operations:
                     with Image.open(os.path.join(self.folder_path, file)) as img:
                         width, height = img.size
                         print(f"{file} - {width}x{height}")
+                        print("--------------------------------------------------")
                 except Exception as e:
                     print(f"Error: {str(e)}")
 
@@ -40,6 +41,7 @@ class Operations:
                 char_count += len(text_content)
 
                 print(f"{file} - {line_count} lines, {word_count} words, {char_count} characters")
+                print("----------------------------------------------------------------------------------")
 
 
     def program_processing(self):
@@ -74,3 +76,4 @@ class Operations:
                 char_count += len(program_content)
 
                 print(f"{file} - {line_count} lines, {class_count} classes, {method_count} methods, {word_count} words, {char_count} characters")
+                print("-------------------------------------------------------------------------------------------------------------------------------")
