@@ -136,3 +136,4 @@ class FolderOperations():
 
             self.detected_files += detected_files
             self.added_files_during_commit.update(added_files_during_commit)
+#fff
