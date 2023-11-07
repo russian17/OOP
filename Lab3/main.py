@@ -21,9 +21,9 @@ class FolderManager():
 
         while True:
             print("What do you want to do?")
-            print("1 - Commit snapshot and update status")
-            print("2 - Print folder contents")
-            print("3 - Get file status")
+            print("1 - Commit")
+            print("2 - Status")
+            print("3 - Get file info")
             print("4 - Quit the program")
 
             try:
